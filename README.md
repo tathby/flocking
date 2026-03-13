@@ -6,15 +6,6 @@ A Python + `pygame` simulation that demonstrates emergent flocking behavior from
 - **Alignment** (match neighbor heading)
 - **Cohesion** (move toward neighbors)
 
-## Learning concepts covered
-
-- Agent representation with **position**, **velocity**, and **acceleration**
-- Time-based movement updates
-- Local neighbor detection by radius
-- Emergent behavior from simple rules
-- Parameter tuning (weights/radii, max speed/force)
-- Efficiency reflection (`O(n^2)` neighbor checks)
-
 ## Run
 
 1. Install dependency:
@@ -23,27 +14,38 @@ A Python + `pygame` simulation that demonstrates emergent flocking behavior from
 pip install pygame
 ```
 
-2. Start the simulation:
+2. Start the simulation (defaults):
 
 ```bash
 python flocking_sim.py
 ```
 
-## Default parameters
+3. Example with custom parameters:
 
-- Boids: `40`
-- Neighborhood radius: `60`
-- Separation radius: `22`
-- Max speed: `4.0`
-- Max steering force: `0.10`
-- Rule weights:
-  - Separation: `1.6`
-  - Alignment: `1.0`
-  - Cohesion: `1.0`
+```bash
+python flocking_sim.py --num-boids 80 --neighbor-radius 75 --separation-weight 2.0
+```
 
-## Notes on behavior
+## Mouse interaction
 
-- Boids are rendered as **triangles** to show heading direction.
-- Boids use **screen wrapping** at edges.
-- Neighbor detection currently checks all pairs of boids each frame (`O(n^2)`).
-  For larger swarms, a spatial grid or quadtree can improve performance.
+- Hold **left mouse button**: boids **seek** the mouse.
+- Hold **right mouse button**: boids **flee** the mouse.
+
+## Configurable options
+
+- `--num-boids` (default: `40`)
+- `--neighbor-radius` (default: `60`)
+- `--separation-radius` (default: `22`)
+- `--separation-weight` (default: `1.6`)
+- `--alignment-weight` (default: `1.0`)
+- `--cohesion-weight` (default: `1.0`)
+- `--max-speed` (default: `4.0`)
+- `--max-force` (default: `0.10`)
+- `--mouse-force` (default: `1.5`)
+
+## Notes
+
+- Boids are rendered as triangles to show heading direction.
+- Boids use screen wrapping at edges.
+- Neighbor detection checks all boid pairs each frame (`O(n^2)`).
+  For large swarms, a spatial grid/quadtree is recommended.
