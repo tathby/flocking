@@ -316,7 +316,7 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("2D Flocking Simulation")
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont("arial", 16)
+  font = pygame.font.SysFont("arial", 16)
 
     boids = [Boid(WIDTH, HEIGHT, args.max_speed, args.max_force) for _ in range(args.num_boids)]
 
