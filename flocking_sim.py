@@ -7,6 +7,10 @@ FPS = 60
 
 BACKGROUND_COLOR = (20, 20, 30)
 BOID_COLOR = (235, 235, 245)
+PANEL_COLOR = (35, 35, 50)
+TEXT_COLOR = (230, 230, 235)
+SLIDER_BG = (70, 70, 90)
+SLIDER_FILL = (120, 180, 255)
 
 
 class Vector2:
@@ -213,6 +217,69 @@ class Boid:
         )
 
 
+class Slider:
+    def __init__(self, pygame_module, label, min_value, max_value, value, x, y, width, integer=False):
+        self.pygame = pygame_module
+        self.label = label
+        self.min_value = min_value
+        self.max_value = max_value
+        self.value = max(min(value, max_value), min_value)
+        self.integer = integer
+        self.track_rect = pygame_module.Rect(x, y + 20, width, 8)
+        self.knob_radius = 8
+        self.dragging = False
+
+    def _value_to_x(self):
+        ratio = (self.value - self.min_value) / (self.max_value - self.min_value)
+        return self.track_rect.left + ratio * self.track_rect.width
+
+    def _set_from_x(self, x_pos):
+        clamped = max(self.track_rect.left, min(x_pos, self.track_rect.right))
+        ratio = (clamped - self.track_rect.left) / self.track_rect.width
+        value = self.min_value + ratio * (self.max_value - self.min_value)
+        if self.integer:
+            value = round(value)
+        self.value = value
+
+    def handle_event(self, event):
+        if event.type == self.pygame.MOUSEBUTTONDOWN and event.button == 1:
+            knob_x = self._value_to_x()
+            knob_y = self.track_rect.centery
+            distance_to_knob = math.sqrt((event.pos[0] - knob_x) ** 2 + (event.pos[1] - knob_y) ** 2)
+            if self.track_rect.collidepoint(event.pos) or distance_to_knob <= self.knob_radius + 2:
+                self.dragging = True
+                self._set_from_x(event.pos[0])
+                return True
+
+        if event.type == self.pygame.MOUSEBUTTONUP and event.button == 1:
+            self.dragging = False
+
+        if event.type == self.pygame.MOUSEMOTION and self.dragging:
+            self._set_from_x(event.pos[0])
+            return True
+
+        return False
+
+    def draw(self, screen, font):
+        pygame = self.pygame
+        label_value = int(self.value) if self.integer else round(self.value, 2)
+        text_surface = font.render(f"{self.label}: {label_value}", True, TEXT_COLOR)
+        screen.blit(text_surface, (self.track_rect.left, self.track_rect.top - 18))
+
+        pygame.draw.rect(screen, SLIDER_BG, self.track_rect, border_radius=4)
+
+        fill_rect = self.track_rect.copy()
+        fill_rect.width = max(1, int(self._value_to_x() - self.track_rect.left))
+        pygame.draw.rect(screen, SLIDER_FILL, fill_rect, border_radius=4)
+
+        pygame.draw.circle(
+            screen,
+            (240, 245, 255),
+            (int(self._value_to_x()), self.track_rect.centery),
+            self.knob_radius,
+        )
+
+
 def distance(a, b):
     dx = a.x - b.x
     dy = a.y - b.y
@@ -233,6 +300,13 @@ def parse_args():
     return parser.parse_args()
 
 
+def sync_boid_count(boids, target_count, max_speed, max_force):
+    while len(boids) < target_count:
+        boids.append(Boid(WIDTH, HEIGHT, max_speed, max_force))
+    while len(boids) > target_count:
+        boids.pop()
+
+
 def main():
     args = parse_args()
 
@@ -242,8 +316,15 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("2D Flocking Simulation")
     clock = pygame.time.Clock()
+  font = pygame.font.SysFont("arial", 16)
 
     boids = [Boid(WIDTH, HEIGHT, args.max_speed, args.max_force) for _ in range(args.num_boids)]
+
+    sliders = [
+        Slider(pygame, "Boids", 10, 200, args.num_boids, 20, 20, 220, integer=True),
+        Slider(pygame, "Neighbor Radius", 20, 180, args.neighbor_radius, 20, 70, 220),
+        Slider(pygame, "Boid Speed", 1.0, 8.0, args.max_speed, 20, 120, 220),
+    ]
 
     running = True
     while running:
@@ -252,6 +333,17 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            for slider in sliders:
+                slider.handle_event(event)
+
+        args.num_boids = int(sliders[0].value)
+        args.neighbor_radius = sliders[1].value
+        args.max_speed = sliders[2].value
+
+        sync_boid_count(boids, args.num_boids, args.max_speed, args.max_force)
+
+        for boid in boids:
+            boid.max_speed = args.max_speed
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         mouse = Vector2(mouse_x, mouse_y)
@@ -281,6 +373,16 @@ def main():
 
             boid.update()
             boid.draw(screen, pygame)
+
+        panel_rect = pygame.Rect(10, 10, 260, 165)
+        pygame.draw.rect(screen, PANEL_COLOR, panel_rect, border_radius=8)
+        pygame.draw.rect(screen, (90, 100, 125), panel_rect, width=1, border_radius=8)
+
+        for slider in sliders:
+            slider.draw(screen, font)
+
+        hint_text = font.render("LMB: seek  RMB: flee", True, TEXT_COLOR)
+        screen.blit(hint_text, (20, 150))
 
         pygame.display.flip()
 

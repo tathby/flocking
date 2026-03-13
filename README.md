@@ -14,24 +14,30 @@ A Python + `pygame` simulation that demonstrates emergent flocking behavior from
 pip install pygame
 ```
 
-2. Start the simulation (defaults):
+2. Start the simulation:
 
 ```bash
 python flocking_sim.py
 ```
 
-3. Example with custom parameters:
+## Real-time on-screen controls
 
-```bash
-python flocking_sim.py --num-boids 80 --neighbor-radius 75 --separation-weight 2.0
-```
+A control panel in the top-left can be adjusted while the simulation runs:
+
+- **Boids**: change number of agents in real time
+- **Neighbor Radius**: adjust local interaction radius in real time
+- **Boid Speed**: adjust max boid velocity in real time
+
+Drag slider knobs with the mouse to update values immediately.
 
 ## Mouse interaction
 
 - Hold **left mouse button**: boids **seek** the mouse.
 - Hold **right mouse button**: boids **flee** the mouse.
 
-## Configurable options
+## Optional CLI defaults
+
+You can still provide startup defaults via CLI (then fine-tune with sliders):
 
 - `--num-boids` (default: `40`)
 - `--neighbor-radius` (default: `60`)
